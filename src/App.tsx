@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useCalculator } from './hooks/useCalculator';
 import { useSettings } from './hooks/useSettings';
 import { SLIDER_RANGES } from './constants';
@@ -20,6 +20,7 @@ function App() {
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [isMediaInfoOpen, setIsMediaInfoOpen] = useState(false);
   const [isShareNoticeOpen, setIsShareNoticeOpen] = useState(false);
+  const telemetrySnapshotRef = useRef<string | null>(null);
 
   const {
     settings,
@@ -38,8 +39,42 @@ function App() {
     setIsOnboardingOpen(!settings.hasCompletedSetup);
   }, [settings.hasCompletedSetup]);
 
+  const buildTelemetrySnapshot = useCallback(() => ({
+    locale: settings.currency.locale,
+    currencySymbol: settings.currency.symbol,
+    currencyCode: settings.currency.code,
+    measurementUnit: settings.measurementUnit,
+    listPrice: settings.listPrice,
+    minimumInvestmentPrice: settings.minimumInvestmentPrice,
+    defaultMonthlyVolume: settings.defaultMonthlyVolume,
+    defaultSellingPrice: settings.defaultSellingPrice,
+    mediaPricing: settings.mediaPricing,
+    inkPricing: settings.inkPricing,
+  }), [settings]);
+
+  const sendTelemetrySnapshot = useCallback(() => {
+    if (!settings.hasCompletedSetup) return;
+    const snapshot = JSON.stringify(buildTelemetrySnapshot());
+    if (telemetrySnapshotRef.current === snapshot) return;
+    telemetrySnapshotRef.current = snapshot;
+
+    const endpoint = '/.netlify/functions/collect-settings';
+    if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+      const blob = new Blob([snapshot], { type: 'application/json' });
+      navigator.sendBeacon(endpoint, blob);
+    } else {
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: snapshot,
+        keepalive: true,
+      }).catch((error) => console.error('Failed to send telemetry snapshot', error));
+    }
+  }, [buildTelemetrySnapshot, settings.hasCompletedSetup]);
+
   const handleOnboardingComplete = () => {
     updateSettings({ hasCompletedSetup: true });
+    sendTelemetrySnapshot();
   };
 
   const mediaTypes = useMemo(() => getMediaTypes(), [settings]);
@@ -65,6 +100,11 @@ function App() {
 
   const currencyLabel = settings.currency.symbol || settings.currency.code;
   const unitLabel = settings.measurementUnit === 'sqft' ? 'ft²' : 'm²';
+
+  const handleSettingsClose = useCallback(() => {
+    setIsSettingsOpen(false);
+    sendTelemetrySnapshot();
+  }, [sendTelemetrySnapshot]);
 
   const formatCurrencyValue = (value: number, options?: Parameters<typeof formatCurrency>[2]) =>
     formatCurrency(value, settings, options);
@@ -163,7 +203,7 @@ function App() {
       {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        onClose={handleSettingsClose}
         settings={settings}
         onUpdateSettings={updateSettings}
         onUpdateCurrency={updateCurrencySettings}
