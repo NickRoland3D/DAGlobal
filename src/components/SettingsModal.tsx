@@ -220,50 +220,6 @@ export const SettingsModal = ({
                 />
               </div>
 
-              <div className="md:col-span-2 flex items-center gap-3">
-                <input
-                  id="use-decimals"
-                  type="checkbox"
-                  checked={settings.currency.useDecimals}
-                  onChange={(e) => {
-                    const useDecimals = e.target.checked;
-                    onUpdateCurrency({
-                      useDecimals,
-                      decimalPlaces: useDecimals ? 2 : 0,
-                    });
-                  }}
-                  className="w-6 h-6 rounded border-2 border-gray-400 text-primary focus:ring-primary"
-                />
-                <label htmlFor="use-decimals" className="font-bold text-base text-gray-600 cursor-pointer">
-                  Use Decimals
-                </label>
-              </div>
-              <div>
-                <label className="block font-bold text-base text-gray-600 mb-2">
-                  Measurement Unit
-                </label>
-                <div className="flex gap-3">
-                  {(
-                    [
-                      { id: 'sqm', label: 'm²' },
-                      { id: 'sqft', label: 'ft²' },
-                    ] as const
-                  ).map(option => (
-                    <button
-                      key={option.id}
-                      onClick={() => onUpdateSettings({ measurementUnit: option.id })}
-                      className={`px-4 py-2 rounded-full border-2 font-bold text-sm transition-colors ${
-                        settings.measurementUnit === option.id
-                          ? 'border-primary text-primary'
-                          : 'border-gray-300 text-gray-500 hover:border-primary/60 hover:text-primary'
-                      }`}
-                      type="button"
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
 

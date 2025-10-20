@@ -69,7 +69,12 @@ export const PriceCalculator = ({
 
   const numberButtons = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
-  const isBelowMinimum = calculatedPrice < listPrice && calculatedPrice < currentPrice;
+  const requiredDigits = Math.max(1, listPrice.toString().replace(/\D/g, '').length);
+  const enteredDigits = displayValue.replace(/\D/g, '').length;
+  const hasCompleteEntry = discount > 0 || enteredDigits >= requiredDigits;
+
+  const isBelowMinimum =
+    hasCompleteEntry && calculatedPrice < listPrice && calculatedPrice < currentPrice;
 
   return (
     <div
