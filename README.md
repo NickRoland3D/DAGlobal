@@ -63,6 +63,15 @@ npm run build
 npm run preview
 ```
 
+### Environment Variables
+
+Netlify functions rely on Supabase credentials that should **not** be committed to source control. Copy `netlify.env.example` to `netlify.env` and provide your deployment-specific values before running Netlify locally or deploying:
+
+```bash
+cp netlify.env.example netlify.env
+# then edit netlify.env to include your Supabase URL, service role key, and table name
+```
+
 ## Responsive Breakpoints
 
 The application features three responsive layouts:
