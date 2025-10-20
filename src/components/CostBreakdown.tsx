@@ -1,4 +1,5 @@
 import { ProgressBar } from './ProgressBar';
+import { FormatCurrencyOptions } from '../utils/format';
 
 interface CostBreakdownProps {
   mediaCost: number;
@@ -7,9 +8,28 @@ interface CostBreakdownProps {
   totalCost: number;
   sellingPrice: number;
   mediaType?: string;
+  currencyLabel: string;
+  formatCurrency: (value: number, options?: FormatCurrencyOptions) => string;
+  unitLabel: string;
 }
 
-export const CostBreakdown = ({ mediaCost, inkCost, profitMargin, totalCost, sellingPrice, mediaType = 'STANDARD' }: CostBreakdownProps) => {
+export const CostBreakdown = ({
+  mediaCost,
+  inkCost,
+  profitMargin,
+  totalCost,
+  sellingPrice,
+  mediaType = 'STANDARD',
+  currencyLabel,
+  formatCurrency,
+  unitLabel,
+}: CostBreakdownProps) => {
+  const compactOptions: FormatCurrencyOptions = { includeSymbol: false };
+  const formattedMediaCost = formatCurrency(mediaCost, compactOptions);
+  const formattedInkCost = formatCurrency(inkCost, compactOptions);
+  const formattedProfitMargin = formatCurrency(profitMargin, { ...compactOptions, minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const formattedTotalCost = formatCurrency(totalCost, compactOptions);
+
   return (
     <div className="bg-white/90 rounded-2xl p-6">
       <div className="flex items-center justify-between mb-4">
@@ -21,7 +41,9 @@ export const CostBreakdown = ({ mediaCost, inkCost, profitMargin, totalCost, sel
             <span className="font-bold text-gray-600 text-xs">{mediaType.toUpperCase()}</span>
           </div>
           <div className="bg-secondary rounded-full px-3 py-1">
-            <span className="font-bold text-primary text-xs">{mediaCost.toFixed(2)} AED/m²</span>
+            <span className="font-bold text-primary text-xs">
+              {currencyLabel} {formattedMediaCost}/{unitLabel}
+            </span>
           </div>
         </div>
       </div>
@@ -31,28 +53,28 @@ export const CostBreakdown = ({ mediaCost, inkCost, profitMargin, totalCost, sel
           label="MEDIA COST"
           value={mediaCost}
           maxValue={sellingPrice}
-          displayValue={`${mediaCost.toFixed(2)} AED`}
+          displayValue={`${currencyLabel} ${formattedMediaCost}`}
           color="bg-primary/50"
         />
         <ProgressBar
           label="INK COST"
           value={inkCost}
           maxValue={sellingPrice}
-          displayValue={`${inkCost.toFixed(2)} AED`}
+          displayValue={`${currencyLabel} ${formattedInkCost}`}
           color="bg-primary/30"
         />
         <ProgressBar
-          label="PROFIT MARGIN / m²"
+          label={`PROFIT MARGIN / ${unitLabel}`}
           value={profitMargin}
           maxValue={sellingPrice}
-          displayValue={`${profitMargin.toFixed(0)} AED`}
+          displayValue={`${currencyLabel} ${formattedProfitMargin}`}
           color="bg-primary"
         />
         <ProgressBar
-          label="TOTAL COST / m²"
+          label={`TOTAL COST / ${unitLabel}`}
           value={totalCost}
           maxValue={sellingPrice}
-          displayValue={`${totalCost.toFixed(2)} AED`}
+          displayValue={`${currencyLabel} ${formattedTotalCost}`}
           color="bg-primary/55"
         />
       </div>

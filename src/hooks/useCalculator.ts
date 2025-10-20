@@ -9,6 +9,7 @@ interface UseCalculatorProps {
   defaultSellingPrice: number;
   defaultMediaType: 'economy' | 'standard' | 'premium';
   totalInkCost: number;
+  minimumInvestment: number;
 }
 
 export const useCalculator = ({
@@ -18,6 +19,7 @@ export const useCalculator = ({
   defaultSellingPrice,
   defaultMediaType,
   totalInkCost,
+  minimumInvestment,
 }: UseCalculatorProps) => {
   const [state, setState] = useState<CalculatorState>({
     totalInvestment: totalInvestment,
@@ -26,6 +28,7 @@ export const useCalculator = ({
     selectedMedia: mediaTypes.find(m => m.id === defaultMediaType) || mediaTypes[0],
     monthlyOverhead: DEFAULT_VALUES.monthlyOverhead,
     inkCost: totalInkCost,
+    isBelowMinimumInvestment: totalInvestment < minimumInvestment,
   });
 
   // Update state when settings change
@@ -35,8 +38,9 @@ export const useCalculator = ({
       totalInvestment: totalInvestment,
       inkCost: totalInkCost,
       selectedMedia: mediaTypes.find(m => m.id === prev.selectedMedia.id) || mediaTypes[0],
+      isBelowMinimumInvestment: totalInvestment < minimumInvestment,
     }));
-  }, [mediaTypes, totalInvestment, totalInkCost]);
+  }, [mediaTypes, totalInvestment, totalInkCost, minimumInvestment]);
 
   const metrics = useMemo<CalculatedMetrics>(() => {
     const { monthlyOutput, sellingPrice, selectedMedia, inkCost, monthlyOverhead, totalInvestment } = state;
@@ -91,8 +95,10 @@ export const useCalculator = ({
   const setSellingPrice = (value: number) => updateState({ sellingPrice: value });
   const setSelectedMedia = (media: MediaType) => updateState({ selectedMedia: media });
   const setMonthlyOverhead = (value: number) => updateState({ monthlyOverhead: value });
-  const setTotalInvestment = (value: number) => updateState({ totalInvestment: value });
-
+  const setTotalInvestment = (value: number) => updateState({
+    totalInvestment: value,
+    isBelowMinimumInvestment: value < minimumInvestment,
+  });
   return {
     state,
     metrics,

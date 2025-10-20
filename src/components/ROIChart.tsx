@@ -1,4 +1,5 @@
 import { ComposedChart, Line, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
+import { FormatCurrencyOptions } from '../utils/format';
 
 interface ROIChartProps {
   data: Array<{
@@ -6,18 +7,35 @@ interface ROIChartProps {
     monthlyProfit: number;
     cumulativeReturn: number;
   }>;
+  currencyLabel: string;
+  formatCurrency: (value: number, options?: FormatCurrencyOptions) => string;
 }
 
-export const ROIChart = ({ data }: ROIChartProps) => {
+export const ROIChart = ({ data, currencyLabel, formatCurrency }: ROIChartProps) => {
   const chartData = data.filter((_, i) => i === 0 || (i + 1) % 3 === 0);
 
-  const formatCurrency = (value: number) => {
-    if (value >= 1000000) return `AED ${(value / 1000).toFixed(0)}K`;
-    if (value >= 1000) return `AED ${(value / 1000).toFixed(0)}K`;
-    if (value <= -1000000) return `AED ${(value / 1000).toFixed(0)}K`;
-    if (value <= -1000) return `AED ${(value / 1000).toFixed(0)}K`;
-    return `AED ${value}`;
-  };
+  const formatAxisCurrency = (value: number) =>
+    `${currencyLabel} ${formatCurrency(value, { includeSymbol: false, compact: true })}`;
+
+  const axisBounds = (() => {
+    if (chartData.length === 0) {
+      return {
+        domain: [-10000, 10000] as [number, number],
+        ticks: [-10000, -5000, 0, 5000, 10000],
+      };
+    }
+
+    const values = chartData.flatMap(point => [point.monthlyProfit, point.cumulativeReturn]);
+    const maxAbs = Math.max(...values.map(val => Math.abs(val)), 1);
+    const magnitude = Math.pow(10, Math.floor(Math.log10(maxAbs)));
+    const scaledMax = Math.ceil(maxAbs / magnitude) * magnitude;
+    const domainMax = Math.max(scaledMax, magnitude);
+    const domain = [-domainMax, domainMax] as [number, number];
+    const half = domainMax / 2;
+    const ticks = [-domainMax, -half, 0, half, domainMax];
+
+    return { domain, ticks };
+  })();
 
   const renderLegend = () => {
     const items = [
@@ -59,11 +77,11 @@ export const ROIChart = ({ data }: ROIChartProps) => {
             stroke="#e0e0e0"
           />
           <YAxis
-            tickFormatter={formatCurrency}
+            tickFormatter={formatAxisCurrency}
             tick={{ fontSize: 10, fill: '#808080' }}
             stroke="#e0e0e0"
-            domain={[-200000, 400000]}
-            ticks={[400000, 300000, 200000, 100000, 0, -100000, -200000]}
+            domain={axisBounds.domain}
+            ticks={axisBounds.ticks}
           />
           <Legend
             content={renderLegend}

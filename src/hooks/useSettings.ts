@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Settings, MediaType } from '../types';
-import { DEFAULT_SETTINGS, ROLL_COVERAGE } from '../constants';
+import { Settings, MediaType, CurrencySettings } from '../types';
+import { DEFAULT_SETTINGS } from '../constants';
 
 const STORAGE_KEY = 'dafigma-settings';
 
@@ -12,18 +12,58 @@ const calculateCostPerSqm = (rollPrice: number, rollCoverage: number) =>
 const calculateInkCost = (pricePerBottle: number, usagePerSqm: number) =>
   parseFloat(((pricePerBottle / 500) * usagePerSqm).toFixed(2));
 
+const mergeWithDefaults = (stored: Partial<Settings>): Settings => {
+  const hasCompletedSetup =
+    stored.hasCompletedSetup !== undefined ? stored.hasCompletedSetup : true;
+
+  return {
+    ...DEFAULT_SETTINGS,
+    ...stored,
+    hasCompletedSetup,
+    currency: {
+      ...DEFAULT_SETTINGS.currency,
+      ...(stored.currency ?? {}),
+    },
+    measurementUnit: stored.measurementUnit ?? DEFAULT_SETTINGS.measurementUnit,
+    mediaPricing: {
+      economy: {
+        ...DEFAULT_SETTINGS.mediaPricing.economy,
+        ...(stored.mediaPricing?.economy ?? {}),
+      },
+      standard: {
+        ...DEFAULT_SETTINGS.mediaPricing.standard,
+        ...(stored.mediaPricing?.standard ?? {}),
+      },
+      premium: {
+        ...DEFAULT_SETTINGS.mediaPricing.premium,
+        ...(stored.mediaPricing?.premium ?? {}),
+      },
+    },
+    inkPricing: {
+      cmyk: {
+        ...DEFAULT_SETTINGS.inkPricing.cmyk,
+        ...(stored.inkPricing?.cmyk ?? {}),
+      },
+      structural: {
+        ...DEFAULT_SETTINGS.inkPricing.structural,
+        ...(stored.inkPricing?.structural ?? {}),
+      },
+    },
+  };
+};
+
 export const useSettings = () => {
   // Initialize settings from localStorage or defaults
   const [settings, setSettings] = useState<Settings>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        return mergeWithDefaults(JSON.parse(stored));
       }
     } catch (error) {
       console.error('Failed to load settings from localStorage:', error);
     }
-    return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS };
   });
 
   // Save to localStorage whenever settings change
@@ -38,6 +78,43 @@ export const useSettings = () => {
   // Update a specific setting
   const updateSettings = (updates: Partial<Settings>) => {
     setSettings(prev => ({ ...prev, ...updates }));
+  };
+
+  const updateCurrencySettings = (updates: Partial<CurrencySettings>) => {
+    setSettings(prev => ({
+      ...prev,
+      currency: {
+        ...prev.currency,
+        ...updates,
+      },
+    }));
+  };
+
+  const replaceSettings = (incoming: Partial<Settings>) => {
+    setSettings(() => {
+      const merged = mergeWithDefaults({
+        ...incoming,
+        hasCompletedSetup: incoming.hasCompletedSetup !== undefined ? incoming.hasCompletedSetup : true,
+      });
+
+      return {
+        ...merged,
+        mediaPricing: {
+          economy: {
+            ...merged.mediaPricing.economy,
+            costPerSqm: calculateCostPerSqm(merged.mediaPricing.economy.rollPrice, merged.rollCoverage),
+          },
+          standard: {
+            ...merged.mediaPricing.standard,
+            costPerSqm: calculateCostPerSqm(merged.mediaPricing.standard.rollPrice, merged.rollCoverage),
+          },
+          premium: {
+            ...merged.mediaPricing.premium,
+            costPerSqm: calculateCostPerSqm(merged.mediaPricing.premium.rollPrice, merged.rollCoverage),
+          },
+        },
+      };
+    });
   };
 
   // Update media roll price and recalculate cost per m²
@@ -76,7 +153,7 @@ export const useSettings = () => {
 
   // Reset to default settings
   const resetSettings = () => {
-    setSettings(DEFAULT_SETTINGS);
+    setSettings({ ...DEFAULT_SETTINGS });
   };
 
   // Get media types with current pricing
@@ -117,6 +194,8 @@ export const useSettings = () => {
   return {
     settings,
     updateSettings,
+    updateCurrencySettings,
+    replaceSettings,
     updateMediaRollPrice,
     updateInkPricing,
     resetSettings,

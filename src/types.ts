@@ -11,9 +11,17 @@ export interface MediaPricing {
 }
 
 export interface InkPricing {
-  pricePerBottle: number; // AED per 500ml
+  pricePerBottle: number; // price per 500ml
   usagePerSqm: number; // ml per m²
   usagePercentage: number; // percentage for display
+}
+
+export interface CurrencySettings {
+  code: string;
+  symbol: string;
+  locale: string;
+  useDecimals: boolean;
+  decimalPlaces: number;
 }
 
 export interface Settings {
@@ -22,6 +30,9 @@ export interface Settings {
   defaultMonthlyVolume: number;
   defaultSellingPrice: number;
   defaultMediaType: 'economy' | 'standard' | 'premium';
+  hasCompletedSetup: boolean;
+  currency: CurrencySettings;
+  measurementUnit: 'sqm' | 'sqft';
   mediaPricing: {
     economy: MediaPricing;
     standard: MediaPricing;
@@ -41,6 +52,7 @@ export interface CalculatorState {
   selectedMedia: MediaType;
   monthlyOverhead: number;
   inkCost: number;
+  isBelowMinimumInvestment: boolean;
 }
 
 export interface CalculatedMetrics {

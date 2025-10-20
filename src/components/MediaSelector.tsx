@@ -1,4 +1,5 @@
 import { MediaType } from '../types';
+import { FormatCurrencyOptions } from '../utils/format';
 
 interface MediaSelectorProps {
   mediaTypes: MediaType[];
@@ -6,9 +7,12 @@ interface MediaSelectorProps {
   onChange: (media: MediaType) => void;
   showInfoIcon?: boolean;
   onInfoClick?: () => void;
+  currencyLabel: string;
+  formatCurrency: (value: number, options?: FormatCurrencyOptions) => string;
+  unitLabel: string;
 }
 
-export const MediaSelector = ({ mediaTypes, selected, onChange, showInfoIcon = false, onInfoClick }: MediaSelectorProps) => {
+export const MediaSelector = ({ mediaTypes, selected, onChange, showInfoIcon = false, onInfoClick, currencyLabel, formatCurrency, unitLabel }: MediaSelectorProps) => {
   return (
     <div className="bg-white/90 rounded-3xl p-6 shadow-sm">
       <div className="font-black text-[15px] text-gray-500 tracking-wider mb-4 flex items-center justify-between">
@@ -41,7 +45,7 @@ export const MediaSelector = ({ mediaTypes, selected, onChange, showInfoIcon = f
                 <div className="text-xs tracking-wide">{media.description}</div>
               </div>
               <div className="font-bold text-base">
-                {media.costPerSqm.toFixed(2)} AED/m²
+                {currencyLabel} {formatCurrency(media.costPerSqm, { includeSymbol: false })}/{unitLabel}
               </div>
             </button>
           );

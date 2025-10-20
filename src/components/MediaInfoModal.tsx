@@ -1,5 +1,6 @@
 import { CostBreakdown } from './CostBreakdown';
 import { MonthlyOverhead } from './MonthlyOverhead';
+import { FormatCurrencyOptions } from '../utils/format';
 
 interface MediaInfoModalProps {
   isOpen: boolean;
@@ -14,6 +15,9 @@ interface MediaInfoModalProps {
   onMonthlyOverheadChange: (value: number) => void;
   overheadMin: number;
   overheadMax: number;
+  currencyLabel: string;
+  formatCurrency: (value: number, options?: FormatCurrencyOptions) => string;
+  unitLabel: string;
 }
 
 export const MediaInfoModal = ({
@@ -29,6 +33,9 @@ export const MediaInfoModal = ({
   onMonthlyOverheadChange,
   overheadMin,
   overheadMax,
+  currencyLabel,
+  formatCurrency,
+  unitLabel,
 }: MediaInfoModalProps) => {
   if (!isOpen) return null;
 
@@ -75,6 +82,9 @@ export const MediaInfoModal = ({
             totalCost={totalCost}
             sellingPrice={sellingPrice}
             mediaType={mediaType}
+            currencyLabel={currencyLabel}
+            formatCurrency={formatCurrency}
+            unitLabel={unitLabel}
           />
 
           {/* Monthly Overhead */}
@@ -83,6 +93,8 @@ export const MediaInfoModal = ({
             min={overheadMin}
             max={overheadMax}
             onChange={onMonthlyOverheadChange}
+            currencyLabel={currencyLabel}
+            formatCurrency={formatCurrency}
           />
         </div>
       </div>

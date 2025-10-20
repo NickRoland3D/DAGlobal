@@ -11,33 +11,42 @@ const calculateInkCost = (pricePerBottle: number, usagePerSqm: number) =>
   parseFloat(((pricePerBottle / 500) * usagePerSqm).toFixed(2));
 
 export const DEFAULT_SETTINGS: Settings = {
-  listPrice: 220000,
-  minimumInvestmentPrice: 195000,
-  defaultMonthlyVolume: 150,
-  defaultSellingPrice: 190,
+  listPrice: 52995,
+  minimumInvestmentPrice: 48900,
+  defaultMonthlyVolume: 1000,
+  defaultSellingPrice: 45,
   defaultMediaType: 'economy',
+  hasCompletedSetup: false,
+  currency: {
+    code: 'USD',
+    symbol: '$',
+    locale: 'en-US',
+    useDecimals: true,
+    decimalPlaces: 2,
+  },
+  measurementUnit: 'sqft',
   mediaPricing: {
     economy: {
-      rollPrice: 1670,
-      costPerSqm: calculateCostPerSqm(1670), // 22.27
+      rollPrice: 435.49,
+      costPerSqm: calculateCostPerSqm(435.49),
     },
     standard: {
-      rollPrice: 2260,
-      costPerSqm: calculateCostPerSqm(2260), // 30.13
+      rollPrice: 640.81,
+      costPerSqm: calculateCostPerSqm(640.81),
     },
     premium: {
-      rollPrice: 2850,
-      costPerSqm: calculateCostPerSqm(2850), // 38.00
+      rollPrice: 792.99,
+      costPerSqm: calculateCostPerSqm(792.99),
     },
   },
   inkPricing: {
     cmyk: {
-      pricePerBottle: 375,
+      pricePerBottle: 98.95,
       usagePerSqm: 9,
       usagePercentage: 60,
     },
     structural: {
-      pricePerBottle: 460,
+      pricePerBottle: 98.95,
       usagePerSqm: 6,
       usagePercentage: 40,
     },

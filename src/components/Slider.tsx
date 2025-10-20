@@ -8,18 +8,38 @@ interface SliderProps {
   step?: number;
   onChange: (value: number) => void;
   unit?: string;
+  formatValue?: (value: number) => string;
+  hideUnit?: boolean;
 }
 
-export const Slider = ({ label, value, min, max, step = 1, onChange, unit = '' }: SliderProps) => {
+const getStepPrecision = (step: number) => {
+  if (!Number.isFinite(step) || step <= 0) return 0;
+  const stepString = step.toString();
+  if (stepString.includes('e-')) {
+    const exponent = Number(stepString.split('e-')[1]);
+    return Number.isFinite(exponent) ? exponent : 0;
+  }
+  const decimalPart = stepString.split('.')[1];
+  return decimalPart ? decimalPart.length : 0;
+};
+
+export const Slider = ({ label, value, min, max, step = 1, onChange, unit = '', formatValue, hideUnit = false }: SliderProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(value.toString());
   const sliderRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const stepPrecision = getStepPrecision(step);
 
   // Clamp percentage for visual display (slider position)
   const clampedValue = Math.max(min, Math.min(max, value));
   const percentage = ((clampedValue - min) / (max - min)) * 100;
+
+  const applyStep = (rawValue: number) => {
+    if (!Number.isFinite(step) || step <= 0) return rawValue;
+    const stepped = Math.round(rawValue / step) * step;
+    return Number(stepped.toFixed(stepPrecision));
+  };
 
   const handleMouseDown = () => setIsDragging(true);
 
@@ -29,8 +49,9 @@ export const Slider = ({ label, value, min, max, step = 1, onChange, unit = '' }
     const rect = sliderRef.current.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const newPercentage = Math.max(0, Math.min(100, (offsetX / rect.width) * 100));
-    const newValue = Math.round((newPercentage / 100) * (max - min) + min);
-    const steppedValue = Math.round(newValue / step) * step;
+    const rawValue = (newPercentage / 100) * (max - min) + min;
+    const clamped = Math.max(min, Math.min(max, rawValue));
+    const steppedValue = applyStep(clamped);
 
     onChange(Math.max(min, Math.min(max, steppedValue)));
   };
@@ -72,8 +93,8 @@ export const Slider = ({ label, value, min, max, step = 1, onChange, unit = '' }
 
     // Validate that it's a number and not negative
     if (!isNaN(numValue) && numValue >= 0) {
-      // Round to step increment
-      const steppedValue = Math.round(numValue / step) * step;
+      const clamped = Math.max(min, Math.min(max, numValue));
+      const steppedValue = applyStep(clamped);
       onChange(steppedValue);
     } else {
       // Invalid input, revert to current value
@@ -91,18 +112,18 @@ export const Slider = ({ label, value, min, max, step = 1, onChange, unit = '' }
     <div className="bg-white/90 rounded-3xl p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div className="font-black text-[15px] text-gray-500 tracking-wider">{label}</div>
-        <div className="bg-gray-200 rounded-full px-4 py-1.5 min-w-[70px] flex items-center justify-center gap-0.5">
+        <div className="bg-gray-200 rounded-full px-3 py-1.5 min-w-[60px] flex items-center justify-center gap-0.5">
           <input
             ref={inputRef}
             type="text"
-            value={isEditing ? inputValue : value}
+            value={isEditing ? inputValue : (formatValue ? formatValue(value) : value.toString())}
             onChange={handleInputChange}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             onKeyDown={handleInputKeyDown}
-            className="font-black text-[15px] text-gray-800 bg-transparent text-center outline-none max-w-[50px]"
+            className="font-black text-[15px] text-gray-800 bg-transparent text-center outline-none max-w-[60px]"
           />
-          {unit && <span className="font-black text-[15px] text-gray-800">{unit}</span>}
+          {!hideUnit && unit && <span className="font-black text-[15px] text-gray-800">{unit}</span>}
         </div>
       </div>
 

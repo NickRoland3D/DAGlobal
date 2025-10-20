@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FormatCurrencyOptions } from '../utils/format';
 
 interface PriceCalculatorProps {
   isOpen: boolean;
@@ -6,6 +7,8 @@ interface PriceCalculatorProps {
   listPrice: number;
   currentPrice: number;
   onConfirm: (price: number) => void;
+  currencyLabel: string;
+  formatCurrency: (value: number, options?: FormatCurrencyOptions) => string;
 }
 
 export const PriceCalculator = ({
@@ -14,6 +17,8 @@ export const PriceCalculator = ({
   listPrice,
   currentPrice,
   onConfirm,
+  currencyLabel,
+  formatCurrency,
 }: PriceCalculatorProps) => {
   const [displayValue, setDisplayValue] = useState((currentPrice || listPrice || 0).toString());
   const [discount, setDiscount] = useState(0);
@@ -62,20 +67,28 @@ export const PriceCalculator = ({
 
   const calculatedPrice = getCurrentDisplayPrice();
 
-  const formatPrice = (price: number) => {
-    return price.toLocaleString();
-  };
-
   const numberButtons = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
+  const isBelowMinimum = calculatedPrice < listPrice && calculatedPrice < currentPrice;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-[#1a1a1a] rounded-3xl p-6 mx-4">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm ${
+        isBelowMinimum ? 'bg-red-900/80' : 'bg-black/80'
+      }`}
+    >
+      <div
+        className={`w-full max-w-md rounded-3xl p-6 mx-4 transition-colors duration-300 ${
+          isBelowMinimum ? 'bg-[#450000]' : 'bg-[#1a1a1a]'
+        }`}
+      >
         {/* Close Button */}
         <div className="flex justify-end mb-4">
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center hover:bg-gray-600 transition-colors"
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+              isBelowMinimum ? 'bg-red-700 hover:bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
+            }`}
           >
             <svg
               className="w-5 h-5 text-gray-300"
@@ -95,21 +108,36 @@ export const PriceCalculator = ({
 
         {/* Header Pills */}
         <div className="flex gap-3 mb-6">
-          <div className="flex-1 bg-gray-800 rounded-2xl px-4 py-3 text-center">
-            <div className="text-xs font-bold text-gray-400 mb-1">LIST</div>
-            <div className="text-lg font-bold text-gray-300">{formatPrice(listPrice)}</div>
+          <div
+            className={`flex-1 rounded-2xl px-4 py-3 text-center transition-colors ${
+              isBelowMinimum ? 'bg-red-800 text-red-100' : 'bg-gray-800'
+            }`}
+          >
+            <div className={`text-xs font-bold mb-1 ${isBelowMinimum ? 'text-red-200' : 'text-gray-400'}`}>LIST</div>
+            <div className={`text-lg font-bold ${isBelowMinimum ? 'text-red-100' : 'text-gray-300'}`}>{formatCurrency(listPrice)}</div>
           </div>
-          <div className="flex-1 bg-gray-800 rounded-2xl px-4 py-3 text-center">
-            <div className="text-xs font-bold text-primary mb-1">DISCOUNT</div>
-            <div className="text-lg font-bold text-primary">{discount}%</div>
+          <div
+            className={`flex-1 rounded-2xl px-4 py-3 text-center transition-colors ${
+              isBelowMinimum ? 'bg-red-700 text-red-100' : 'bg-gray-800'
+            }`}
+          >
+            <div className={`text-xs font-bold mb-1 ${isBelowMinimum ? 'text-red-200' : 'text-primary'}`}>DISCOUNT</div>
+            <div className={`text-lg font-bold ${isBelowMinimum ? 'text-red-100' : 'text-primary'}`}>{discount}%</div>
           </div>
         </div>
 
         {/* Large Price Display */}
-        <div className="text-center mb-8 py-6 border-b border-gray-700">
-          <div className="text-sm text-gray-500 mb-2">AED</div>
-          <div className="text-5xl font-black text-white">
-            {formatPrice(calculatedPrice)}
+        <div
+          className={`text-center mb-8 py-6 border-b transition-colors ${
+            isBelowMinimum ? 'border-red-700' : 'border-gray-700'
+          }`}
+        >
+          <div className={`text-sm mb-2 ${isBelowMinimum ? 'text-red-200' : 'text-gray-500'}`}>{currencyLabel}</div>
+          <div className={`text-5xl font-black ${isBelowMinimum ? 'text-red-50' : 'text-white'}`}>
+            {formatCurrency(calculatedPrice, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
           </div>
         </div>
 
