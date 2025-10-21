@@ -9,6 +9,17 @@ export interface FormatCurrencyOptions {
 
 const FALLBACK_LOCALE = 'en-US';
 
+export const normalizeCurrencyCode = (raw?: string) => {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  const lettersOnly = trimmed.replace(/[^a-zA-Z]/g, '').toUpperCase();
+  return lettersOnly.slice(0, 3);
+};
+
+export const getCurrencyCode = (settings: Settings) =>
+  normalizeCurrencyCode(settings.currency.code || settings.currency.symbol);
+
 const normalizeLocale = (rawLocale?: string) => {
   if (!rawLocale) return FALLBACK_LOCALE;
   const trimmed = rawLocale.trim();
@@ -81,11 +92,13 @@ export const formatCurrency = (
 
   const formattedNumber = formatter.format(value);
 
-  if (!includeSymbol || !settings.currency.symbol) {
+  const currencyCode = getCurrencyCode(settings);
+
+  if (!includeSymbol || !currencyCode) {
     return formattedNumber;
   }
 
-  return `${settings.currency.symbol} ${formattedNumber}`.trim();
+  return `${currencyCode} ${formattedNumber}`.trim();
 };
 
 export const formatNumber = (

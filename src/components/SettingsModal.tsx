@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Settings, CurrencySettings } from '../types';
-import { formatCurrency } from '../utils/format';
+import { formatCurrency, getCurrencyCode, normalizeCurrencyCode } from '../utils/format';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ export const SettingsModal = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importError, setImportError] = useState<string | null>(null);
 
-  const currencyLabel = settings.currency.symbol || settings.currency.code;
+  const currencyLabel = getCurrencyCode(settings) || settings.currency.code || '';
 
   const handleInputChange = (field: keyof Settings, value: number) => {
     onUpdateSettings({ [field]: value });
@@ -55,6 +55,12 @@ export const SettingsModal = ({
   };
 
   const handleCurrencyChange = <K extends keyof CurrencySettings>(field: K, value: CurrencySettings[K]) => {
+    if (field === 'code') {
+      const code = normalizeCurrencyCode(String(value ?? ''));
+      onUpdateCurrency({ code, symbol: code });
+      return;
+    }
+
     onUpdateCurrency({ [field]: value });
   };
 
@@ -190,21 +196,13 @@ export const SettingsModal = ({
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block font-bold text-base text-gray-600 mb-2">
-                  Currency Symbol
-                </label>
+                <label className="block font-bold text-base text-gray-600 mb-2">Currency Code</label>
                 <input
                   type="text"
-                  value={settings.currency.symbol}
-                  onChange={(e) => {
-                    const symbol = e.target.value;
-                    const inferredCode = symbol.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 3);
-                    onUpdateCurrency({
-                      symbol,
-                      ...(inferredCode.length === 3 ? { code: inferredCode } : {}),
-                    });
-                  }}
+                  value={settings.currency.code}
+                  onChange={(e) => handleCurrencyChange('code', e.target.value)}
                   className="w-full px-6 py-4 text-2xl font-bold text-gray-800 border-2 border-gray-300 rounded-full focus:outline-none focus:border-primary"
+                  placeholder="USD"
                 />
               </div>
 

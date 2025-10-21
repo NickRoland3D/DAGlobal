@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Settings, MediaType, CurrencySettings } from '../types';
 import { DEFAULT_SETTINGS } from '../constants';
+import { normalizeCurrencyCode } from '../utils/format';
 
 const STORAGE_KEY = 'dafigma-settings';
 
@@ -16,14 +17,22 @@ const mergeWithDefaults = (stored: Partial<Settings>): Settings => {
   const hasCompletedSetup =
     stored.hasCompletedSetup !== undefined ? stored.hasCompletedSetup : true;
 
+  const mergedCurrency = {
+    ...DEFAULT_SETTINGS.currency,
+    ...(stored.currency ?? {}),
+  };
+
+  const normalizedCurrencyCode = normalizeCurrencyCode(mergedCurrency.code || mergedCurrency.symbol);
+  const currency = {
+    ...mergedCurrency,
+    ...(normalizedCurrencyCode ? { code: normalizedCurrencyCode, symbol: normalizedCurrencyCode } : {}),
+  };
+
   return {
     ...DEFAULT_SETTINGS,
     ...stored,
     hasCompletedSetup,
-    currency: {
-      ...DEFAULT_SETTINGS.currency,
-      ...(stored.currency ?? {}),
-    },
+    currency,
     measurementUnit: stored.measurementUnit ?? DEFAULT_SETTINGS.measurementUnit,
     mediaPricing: {
       economy: {
@@ -63,7 +72,7 @@ export const useSettings = () => {
     } catch (error) {
       console.error('Failed to load settings from localStorage:', error);
     }
-    return { ...DEFAULT_SETTINGS };
+    return mergeWithDefaults(DEFAULT_SETTINGS);
   });
 
   // Save to localStorage whenever settings change
@@ -81,13 +90,31 @@ export const useSettings = () => {
   };
 
   const updateCurrencySettings = (updates: Partial<CurrencySettings>) => {
-    setSettings(prev => ({
-      ...prev,
-      currency: {
+    setSettings(prev => {
+      const nextCurrency = {
         ...prev.currency,
         ...updates,
-      },
-    }));
+      };
+
+      if (updates.code !== undefined) {
+        const code = normalizeCurrencyCode(updates.code);
+        nextCurrency.code = code;
+        nextCurrency.symbol = code;
+      } else if (updates.symbol !== undefined) {
+        const inferredCode = normalizeCurrencyCode(updates.symbol);
+        if (inferredCode) {
+          nextCurrency.code = inferredCode;
+          nextCurrency.symbol = inferredCode;
+        } else {
+          nextCurrency.symbol = updates.symbol;
+        }
+      }
+
+      return {
+        ...prev,
+        currency: nextCurrency,
+      };
+    });
   };
 
   const replaceSettings = (incoming: Partial<Settings>) => {
