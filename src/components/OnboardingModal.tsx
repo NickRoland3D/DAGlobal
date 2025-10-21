@@ -1,4 +1,5 @@
 import { Settings, CurrencySettings } from '../types';
+import { normalizeCurrencyCode } from '../utils/format';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -24,8 +25,10 @@ export const OnboardingModal = ({
 }: OnboardingModalProps) => {
   if (!isOpen) return null;
 
+  const currencyCode = normalizeCurrencyCode(settings.currency.code || settings.currency.symbol);
+
   const isValid =
-    Boolean(settings.currency.symbol) &&
+    currencyCode.length === 3 &&
     settings.listPrice > 0 &&
     settings.minimumInvestmentPrice > 0 &&
     settings.defaultSellingPrice > 0 &&
@@ -58,8 +61,8 @@ export const OnboardingModal = ({
             <div>
               <h3 className="font-black text-lg text-gray-700">Currency & Formatting</h3>
               <p className="text-xs text-gray-500 mt-1">
-                Choose how prices appear in the UI. The symbol is shown beside every amount and the locale controls grouping
-                and decimals.
+                Choose how prices appear in the UI. The three-letter currency code is shown beside every amount and the
+                locale controls grouping and decimals.
               </p>
             </div>
             <div className="flex items-start justify-between">
@@ -117,22 +120,19 @@ export const OnboardingModal = ({
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block font-bold text-sm text-gray-600 mb-1">
-                  Currency Symbol
-                </label>
+                <label className="block font-bold text-sm text-gray-600 mb-1">Currency Code</label>
                 <input
                   type="text"
-                  value={settings.currency.symbol}
+                  value={currencyCode}
                   onChange={(e) => {
-                    const symbol = e.target.value;
-                    const inferredCode = symbol.replace(/[^a-zA-Z]/g, '').toUpperCase().slice(0, 3);
+                    const code = normalizeCurrencyCode(e.target.value);
                     onUpdateCurrency({
-                      symbol,
-                      ...(inferredCode.length === 3 ? { code: inferredCode } : {}),
+                      code,
+                      symbol: code,
                     });
                   }}
                   className="w-full px-5 py-3 text-xl font-bold text-gray-800 border-2 border-gray-300 rounded-2xl focus:outline-none focus:border-primary"
-                  placeholder="$"
+                  placeholder="USD"
                 />
               </div>
 
@@ -162,7 +162,7 @@ export const OnboardingModal = ({
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block font-bold text-sm text-gray-600 mb-1">
-                  Printer MSRP ({settings.currency.symbol || settings.currency.code})
+                  Printer MSRP ({currencyCode || settings.currency.code})
                 </label>
                 <input
                   type="number"
@@ -175,7 +175,7 @@ export const OnboardingModal = ({
 
               <div>
                 <label className="block font-bold text-sm text-gray-600 mb-1">
-                  Minimum Investment ({settings.currency.symbol || settings.currency.code})
+                  Minimum Investment ({currencyCode || settings.currency.code})
                 </label>
                 <input
                   type="number"
@@ -188,7 +188,7 @@ export const OnboardingModal = ({
 
               <div>
                 <label className="block font-bold text-sm text-gray-600 mb-1">
-                  Default Selling Price ({settings.currency.symbol || settings.currency.code}/{settings.measurementUnit === 'sqft' ? 'ft²' : 'm²'})
+                  Default Selling Price ({currencyCode || settings.currency.code}/{settings.measurementUnit === 'sqft' ? 'ft²' : 'm²'})
                 </label>
                 <input
                   type="number"
@@ -232,7 +232,7 @@ export const OnboardingModal = ({
                 return (
                   <div key={type} className="space-y-2">
                     <label className="block font-bold text-sm text-gray-600">
-                      {labelMap[type]} ({settings.currency.symbol || settings.currency.code} per roll)
+                      {labelMap[type]} ({currencyCode || settings.currency.code} per roll)
                     </label>
                     <input
                       type="number"
@@ -257,7 +257,7 @@ export const OnboardingModal = ({
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block font-bold text-sm text-gray-600 mb-1">
-                  CMYK ({settings.currency.symbol || settings.currency.code} per 500ml)
+                  CMYK ({currencyCode || settings.currency.code} per 500ml)
                 </label>
                 <input
                   type="number"
@@ -270,7 +270,7 @@ export const OnboardingModal = ({
 
               <div>
                 <label className="block font-bold text-sm text-gray-600 mb-1">
-                  Structural ({settings.currency.symbol || settings.currency.code} per 500ml)
+                  Structural ({currencyCode || settings.currency.code} per 500ml)
                 </label>
                 <input
                   type="number"

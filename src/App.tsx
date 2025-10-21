@@ -12,7 +12,7 @@ import { MonthlyOverhead } from './components/MonthlyOverhead';
 import { SettingsModal } from './components/SettingsModal';
 import { PriceCalculator } from './components/PriceCalculator';
 import { MediaInfoModal } from './components/MediaInfoModal';
-import { formatCurrency, formatNumber } from './utils/format';
+import { formatCurrency, formatNumber, getCurrencyCode } from './utils/format';
 import { OnboardingModal } from './components/OnboardingModal';
 
 function App() {
@@ -39,18 +39,22 @@ function App() {
     setIsOnboardingOpen(!settings.hasCompletedSetup);
   }, [settings.hasCompletedSetup]);
 
-  const buildTelemetrySnapshot = useCallback(() => ({
-    locale: settings.currency.locale,
-    currencySymbol: settings.currency.symbol,
-    currencyCode: settings.currency.code,
-    measurementUnit: settings.measurementUnit,
-    listPrice: settings.listPrice,
-    minimumInvestmentPrice: settings.minimumInvestmentPrice,
-    defaultMonthlyVolume: settings.defaultMonthlyVolume,
-    defaultSellingPrice: settings.defaultSellingPrice,
-    mediaPricing: settings.mediaPricing,
-    inkPricing: settings.inkPricing,
-  }), [settings]);
+  const buildTelemetrySnapshot = useCallback(() => {
+    const currencyCode = getCurrencyCode(settings) || settings.currency.code;
+
+    return {
+      locale: settings.currency.locale,
+      currencySymbol: currencyCode,
+      currencyCode,
+      measurementUnit: settings.measurementUnit,
+      listPrice: settings.listPrice,
+      minimumInvestmentPrice: settings.minimumInvestmentPrice,
+      defaultMonthlyVolume: settings.defaultMonthlyVolume,
+      defaultSellingPrice: settings.defaultSellingPrice,
+      mediaPricing: settings.mediaPricing,
+      inkPricing: settings.inkPricing,
+    };
+  }, [settings]);
 
   const sendTelemetrySnapshot = useCallback(() => {
     if (!settings.hasCompletedSetup) return;
@@ -98,7 +102,7 @@ function App() {
     minimumInvestment: settings.minimumInvestmentPrice,
   });
 
-  const currencyLabel = settings.currency.symbol || settings.currency.code;
+  const currencyLabel = getCurrencyCode(settings) || settings.currency.code || settings.currency.symbol;
   const unitLabel = settings.measurementUnit === 'sqft' ? 'ft²' : 'm²';
 
   const handleSettingsClose = useCallback(() => {
